@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>17. Kanban (drag and drop)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <!--Creare una Kanban con dei task trascinabili.
+        Cos'è una Kanban? Per Kanban si intende una lavagna divisa in colonne che mostrano lo stato di avanzamento dei lavori.-->
+
+    <div class="flex flex-row p-10 m-10 h-[700px] gap-10">
+        <div class="column rounded-xl bg-slate-200 p-10 w-80 flex flex-col gap-4 justify-start" data-column="0">
+            <h2 class="text-2xl text-center font-bold mb-4">In coda</h2>
+                <!--Esempio:
+                <div class="task p-4 rounded-xl shadow-xl bg-white" draggable="true" data-task="0">Rispondere alle email</div>
+                <div class="task p-4 rounded-xl shadow-xl bg-white" draggable="true" data-task="1">Allenare gambe</div>
+                <div class="task p-4 rounded-xl shadow-xl bg-white" draggable="true" data-task="2">Ricaricare credito telefono</div>
+                <div class="task p-4 rounded-xl shadow-xl bg-white" draggable="true" data-task="3">Prenotare visita dentista</div>-->
+        </div>
+        <div class="column rounded-xl bg-slate-200 p-10 w-80 flex flex-col gap-4 justify-start" data-column="1">
+            <h2 class="text-2xl text-center font-bold mb-4">Aperto</h2>
+        </div>
+        <div class="column rounded-xl bg-slate-200 p-10 w-80 flex flex-col gap-4 justify-start" data-column="2">
+            <h2 class="text-2xl text-center font-bold mb-4">In revisione</h2>
+        </div>
+        <div class="column rounded-xl bg-slate-200 p-10 w-80 flex flex-col gap-4 justify-start" data-column="3">
+            <h2 class="text-2xl text-center font-bold mb-4">Completato</h2>
+        </div>
+    </div>
+
+    <script>
+        const placeholderData=[
+            {
+            id: 0,
+            name: "In Coda",
+            tasks: [
+                { id: 0, name: "Rispondere alle email" },
+                { id: 1, name: "Lezione di yoga" },
+                { id: 2, name: "Fare la spesa" },
+                { id: 3, name: "Prenotare visita dentista" },
+            ],
+            },
+            {
+            id: 1,
+            name: "Aperto",
+            tasks: [],
+            },
+            {
+            id: 2,
+            name: "In Revisione",
+            tasks: [],
+            },
+            {
+            id: 3,
+            name: "Completato",
+            tasks: [],
+            },
+        ]
+        
+        //se trovi "data" nel local storage mi devi parsare i dati json altrimenti prendi i placeholderData
+        let data=localStorage.getItem("data") ? JSON.parse(localStorage.getItem("data")) : placeholderData
+
+        generateTasks()
+
+        const tasks=document.querySelectorAll(".task")
+        const columns=document.querySelectorAll(".column")
+        let dragItem=null
+        let dragData=null
+
+        tasks.forEach(task => {
+            task.addEventListener("dragstart", dragStart)
+            task.addEventListener("dragend", dragEnd)
+        })
+
+        columns.forEach(column => {
+            column.addEventListener("dragover", dragOver)
+            column.addEventListener("dragenter", dragEnter)
+            column.addEventListener("dragleave", dragLeave)
+            column.addEventListener("drop", dragDrop)
+        })
+
+        function dragStart(){
+            setTimeout(()=> this.classList.add("hidden"), 0)
+            dragItem = this
+
+            //dai plaholderData mi devi prendere la colonna che ha come id l'id di dove si trova il parente del task (cioè la colonna in cui si trova)
+            const indexColumn=data.findIndex((column) => {
+                return column.id==this.parentElement.getAttribute("data-column")
+            })
+            //mi devi trovare l'index del task
+            const indexTask=data[indexColumn].tasks.findIndex((task) => {
+                return task.id==this.getAttribute("data-task")
+            })
+            dragData=data[indexColumn].tasks.splice(indexTask, 1)[0]
+            localStorage.setItem("data", JSON.stringify(data))
+        }
+
+        function dragEnd(){
+            this.classList.remove("hidden")
+            dragItem=null
+
+            data[this.parentElement.getAttribute("data-column")].tasks.push(dragData)
+            console.log(data)
+            localStorage.setItem("data", JSON.stringify(data))
+        }
+
+        function dragOver(e){
+            e.preventDefault()
+        }
+
+        function dragEnter(){}
+
+        function dragLeave(){}
+
+        function dragDrop(){
+            this.append(dragItem)
+        }
+
+        function generateTasks(){
+            data.forEach((column) => {
+                const targetColumn=document.querySelector(`[data-column="${column.id}"]`)
+                column.tasks.forEach(task => {
+                    const element=document.createElement("div")
+                    element.className="task p-4 rounded-xl shadow-xl bg-white"
+                    element.setAttribute("draggable", true)
+                    element.setAttribute("data-task", task.id)
+                    const text=document.createTextNode(task.name)
+                    element.appendChild(text)
+                    targetColumn.appendChild(element)
+                })
+            })
+        }
+    </script>
+</body>
+</html>
